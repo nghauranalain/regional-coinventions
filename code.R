@@ -29,9 +29,31 @@ table(unique(net.p0$siret) %in% etabs$siret)
 table(unique(net.p1$siret) %in% etabs$siret)
 
 ## analysis for p0
+
+# example: FR2968364; which(net.p0$pubnum == "FR2968364") = [1] 1568 10574 13380
 # add region to net.p0
 net.p0 <- left_join(net.p0, select(etabs, siret, region), by = "siret")
 net.p0$siren <- substr(net.p0$siret, 1, 9)
+
+#### TEST
+# Number of intra regional partners (nb.reg.partners)
+nb.reg.partners <- Vectorize(function(siret, pubnum, region){
+        value <- nrow(filter(net.p0, pubnum == pubnum,
+                              siren != substr(siret, 1, 9),
+                              region == region))
+        return(value)
+})
+
+nb.reg.partners("41481521700073", "FR2968364", "ILE-DE-FRANCE")
+
+net.p0$nb_reg_partners <- nb.reg.partners(net.p0$siret, net.p0$pubnum,
+                                          net.p0$region)
+
+nb.reg.partners(net.p0$siret[1:10], net.p0$pubnum[1:10], net.p0$region[1:10])
+
+####
+
+
 # define variable representing all regions in each patent
 net.p0 <- net.p0 %>%
         group_by(pubnum) %>%
@@ -40,10 +62,38 @@ net.p0 <- net.p0 %>%
         ungroup()
 
 glimpse(net.p0)
+
+
+
+
 # count occurences of "region" in "regions"
 library(stringr)
-str_count(net.p0$regions[1], net.p0$region[1])
+str_count(net.p0$regions[1568], net.p0$region[1568])
+# count occurences of "siren" in "sirens"
+net.p0$siren[1568] == unique(unlist(strsplit(net.p0$sirens[1568], ",")))
 
+isTRUE(net.p0$siren[9] == unique(unlist(strsplit(net.p0$sirens[9], ","))))
+isTRUE(net.p0$siren[1568] == unique(unlist(strsplit(net.p0$sirens[1568], ","))))
+
+unique(unlist(strsplit(net.p0$regions[9], ",")))
+net.p0$region[9] != unique(unlist(strsplit(net.p0$regions[9], ",")))
+isTRUE(net.p0$region[9] != unique(unlist(strsplit(net.p0$regions[9], ","))))
+
+
+
+net.p0$test <- ifelse(isTRUE(net.p0$siren == unique(unlist(strsplit(net.p0$sirens, ",")))),
+                      0, 1)
+
+
+str_count(net.p0$sirens[9], net.p0$siren[9])
+
+row_number(net.p0$pubnum == "FR2968364")
+which(net.p0$pubnum == "FR2968364")
 
 
 ## analysis for p1
+
+
+
+
+
