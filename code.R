@@ -36,20 +36,24 @@ net.p0 <- left_join(net.p0, select(etabs, siret, region), by = "siret")
 net.p0$siren <- substr(net.p0$siret, 1, 9)
 
 #### TEST
+# 07150239700079
+# FR2963026
+# FR2963027
+# FR2963624
+# FR2959235
 # Number of intra regional partners (nb.reg.partners)
-nb.reg.partners <- Vectorize(function(siret, pubnum, region){
+nb.partners.reg <- Vectorize(function(siret, pubnum, region){
         value <- nrow(filter(net.p0, pubnum == pubnum,
-                              siren != substr(siret, 1, 9),
-                              region == region))
+                             siren != substr(siret, 1, 9),
+                             region == region))
         return(value)
 })
 
-nb.reg.partners("41481521700073", "FR2968364", "ILE-DE-FRANCE")
+nb.partners.reg("41481521700073", "FR2968364", "ILE-DE-FRANCE")
 
-net.p0$nb_reg_partners <- nb.reg.partners(net.p0$siret, net.p0$pubnum,
+net.p0$nb_partners_reg <- nb.partners.reg(net.p0$siret, net.p0$pubnum,
                                           net.p0$region)
 
-nb.reg.partners(net.p0$siret[1:10], net.p0$pubnum[1:10], net.p0$region[1:10])
 
 ####
 
