@@ -35,69 +35,81 @@ table(unique(net.p1$siret) %in% etabs$siret)
 net.p0 <- left_join(net.p0, select(etabs, siret, region), by = "siret")
 net.p0$siren <- substr(net.p0$siret, 1, 9)
 
-#### TEST
+# (test)
 # 07150239700079
 # FR2963026
 # FR2963027
 # FR2963624
 # FR2959235
-# Number of intra regional partners (nb.reg.partners)
-nb.partners.reg <- Vectorize(function(siret, pubnum, region){
-        value <- nrow(filter(net.p0, pubnum == pubnum,
-                             siren != substr(siret, 1, 9),
-                             region == region))
-        return(value)
-})
-
-nb.partners.reg("41481521700073", "FR2968364", "ILE-DE-FRANCE")
-
-net.p0$nb_partners_reg <- nb.partners.reg(net.p0$siret, net.p0$pubnum,
-                                          net.p0$region)
+str(net.p0)
+nrow(filter(net.p0, pubnum == "FR2968364" &
+               siren != substr("41481521700073", 1, 9) &
+               region == "ILE-DE-FRANCE"))
+nrow(filter(net.p0, pubnum == "FR2959235" &
+                    siren != substr("07150239700079", 1, 9) &
+                    region != "PICARDIE"))
+nrow(filter(net.p0, pubnum == pubnum[20214] &
+                    siren != substr(siret[20214], 1, 9) &
+                    region == region[20214]))
 
 
-####
+net.p0$nb_partners_reg <- NA # new variable
 
+for(i in 1:nrow(net.p0)){
+        # looping over rows
+        net.p0$nb_partners_reg[i] <- nrow(filter(net.p0, pubnum == pubnum[i] &
+                                                         siren != substr(siret[i], 1, 9) &
+                                                         region == region[i]))
+}
+        
 
-# define variable representing all regions in each patent
-net.p0 <- net.p0 %>%
-        group_by(pubnum) %>%
-        mutate(regions = paste(region, collapse = ","),
-               sirens = paste(siren, collapse = ",")) %>%
-        ungroup()
+net.p0.final <- net.p0 %>%
+        mutate(reg_coinv = ifelse(nb_partners_reg > 0, 1, 0)) %>%
+        group_by(siret) %>%
+        mutate(nb_coinv_reg = sum(reg_coinv)) %>%
+        select(siret, nb_coinv_reg) %>%
+        distinct()
 
-glimpse(net.p0)
+table(net.p0.final$nb_coinv_reg > 0) # 332 establishments involved in 
+# intra regional co-invention (i.e projets with establishement(s) from their own
+# region)
 
-
-
-
-# count occurences of "region" in "regions"
-library(stringr)
-str_count(net.p0$regions[1568], net.p0$region[1568])
-# count occurences of "siren" in "sirens"
-net.p0$siren[1568] == unique(unlist(strsplit(net.p0$sirens[1568], ",")))
-
-isTRUE(net.p0$siren[9] == unique(unlist(strsplit(net.p0$sirens[9], ","))))
-isTRUE(net.p0$siren[1568] == unique(unlist(strsplit(net.p0$sirens[1568], ","))))
-
-unique(unlist(strsplit(net.p0$regions[9], ",")))
-net.p0$region[9] != unique(unlist(strsplit(net.p0$regions[9], ",")))
-isTRUE(net.p0$region[9] != unique(unlist(strsplit(net.p0$regions[9], ","))))
-
-
-
-net.p0$test <- ifelse(isTRUE(net.p0$siren == unique(unlist(strsplit(net.p0$sirens, ",")))),
-                      0, 1)
-
-
-str_count(net.p0$sirens[9], net.p0$siren[9])
-
-row_number(net.p0$pubnum == "FR2968364")
-which(net.p0$pubnum == "FR2968364")
+# export
+#write.csv(net.p0.final,
+ #         "T:/These_GATE/Traitement II/Final/data_CASD/outcomes/nb_coinv_reg_p0.csv",
+  #        row.names = FALSE)
 
 
 ## analysis for p1
+# add region to net.p1
+net.p1 <- left_join(net.p1, select(etabs, siret, region), by = "siret")
+net.p1$siren <- substr(net.p1$siret, 1, 9)
+
+# new variable
+net.p1$nb_partners_reg <- NA 
+
+for(i in 1:nrow(net.p1)){
+        # looping over rows
+        net.p1$nb_partners_reg[i] <- nrow(filter(net.p1, pubnum == pubnum[i] &
+                                                         siren != substr(siret[i], 1, 9) &
+                                                         region == region[i]))
+}
 
 
+net.p1.final <- net.p1 %>%
+        mutate(reg_coinv = ifelse(nb_partners_reg > 0, 1, 0)) %>%
+        group_by(siret) %>%
+        mutate(nb_coinv_reg = sum(reg_coinv)) %>%
+        select(siret, nb_coinv_reg) %>%
+        distinct()
 
+table(net.p1.final$nb_coinv_reg > 0) # 356 establishments involved in 
+# intra regional co-invention (i.e projets with establishement(s) from their own
+# region)
+
+# export
+#write.csv(net.p1.final,
+ #         "T:/These_GATE/Traitement II/Final/data_CASD/outcomes/nb_coinv_reg_p1.csv",
+  #        row.names = FALSE)
 
 
