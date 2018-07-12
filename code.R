@@ -95,7 +95,6 @@ for(i in 1:nrow(net.p1)){
                                                          region == region[i]))
 }
 
-
 net.p1.final <- net.p1 %>%
         mutate(reg_coinv = ifelse(nb_partners_reg > 0, 1, 0)) %>%
         group_by(siret) %>%
